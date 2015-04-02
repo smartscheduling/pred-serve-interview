@@ -8,6 +8,11 @@ end
 
 def generate_test_data
 	db = MongoClient.new.db('test')
+	db['appointments'].drop()
+	db['predictions'].drop()
+
+	setup_db_indexes
+
 	[1,2,3,4,5].each do |practice_ext_id|
 		(0...1000).each do |appointment_ext_id|
 			db['appointments'].insert({
@@ -30,10 +35,21 @@ def generate_test_data
 					'probability' => prob,
 					'date' => date
 				})
+
+				if appointment_ext_id < 200
+					prob = rand()
+					prediction = prob > 0.5
+					date = (Time.now - (7*24*60*60)).utc #a week ago
+					db['predictions'].insert({
+						'appointment_id' => apt['_id'],
+						'prediction' => prediction,
+						'probability' => prob,
+						'date' => date
+					})
+				end					
 			end
 		end
 	end
 end
 
-setup_db_indexes
 generate_test_data
